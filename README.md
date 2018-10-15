@@ -1,5 +1,8 @@
 # node-bom
+[![npm version](https://badge.fury.io/js/node-bom.svg)](https://badge.fury.io/js/node-bom)
+
 NodeJS/Typescript library to access Australian Bureau of Meteorology data.
+
 
 ```js
 import { Bom } from 'node-bom'
@@ -41,3 +44,5 @@ const bom = new Bom({
 ```
 
 ## MIT Licensed
+
+Weather data © Copyright Commonwealth of Australia 2018, Bureau of Meteorology http://www.bom.gov.au
