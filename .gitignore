@@ -92,3 +92,5 @@ Temporary Items
 # compiled output
 dist/*.js
 dist/*.js.map
+bom.js
+bom.js.map

@@ -1,8 +1,8 @@
 {
   "name": "node-bom",
-  "version": "0.1.1",
-  "description": "",
-  "main": "dist/bom.js",
+  "version": "0.1.2",
+  "description": "NodeJS/Typescript library to access Australian Bureau of Meteorology data.",
+  "main": "bom.js",
   "scripts": {
     "dist": "tsc -p .",
     "test": "ts-node test.ts"
@@ -20,7 +20,6 @@
     "ftp": "^0.3.10",
     "geoip-lite": "^1.3.2",
     "geolib": "^2.0.24",
-    "ts-loader": "^5.2.2",
     "xml2js": "^0.4.19"
   }
 }
