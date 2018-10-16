@@ -1,5 +1,4 @@
 import { findNearest } from 'geolib';
-import * as geoip from 'geoip-lite'
 import * as cacheManager from 'cache-manager';
 import * as FtpClient from 'ftp';
 import { parseString } from 'xml2js';
@@ -156,15 +155,6 @@ export class Bom {
     })
 
     return obj
-  }
-
-  async getForecastDataByIpAddress(ip: string) {
-    const ipData = geoip.lookup(ip)
-    if (!ipData) {
-      return null
-    }
-
-    return this.getForecastData(ipData.ll[0], ipData.ll[1])
   }
 
   async getForecastDataByPostcode(postcode: number) {

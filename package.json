@@ -1,6 +1,6 @@
 {
   "name": "node-bom",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "NodeJS/Typescript library to access Australian Bureau of Meteorology data.",
   "main": "bom.js",
   "scripts": {
@@ -13,12 +13,12 @@
   "devDependencies": {
     "cache-manager-fs-hash": "0.0.6",
     "ts-node": "^7.0.1",
+    "geoip-lite": "^1.3.2",
     "typescript": "^3.1.3"
   },
   "dependencies": {
     "cache-manager": "^2.9.0",
     "ftp": "^0.3.10",
-    "geoip-lite": "^1.3.2",
     "geolib": "^2.0.24",
     "xml2js": "^0.4.19"
   }

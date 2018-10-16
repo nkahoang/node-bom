@@ -1,5 +1,6 @@
 import { Bom } from './bom'
 import * as fsStore from 'cache-manager-fs-hash'
+import * as geoip from 'geoip-lite'
 
 const bom = new Bom({
   cacheStore: fsStore,
@@ -18,7 +19,8 @@ bom.getForecastDataByPostcode(3141) // South Yarra, VIC
     console.log(data)
   })
 
-bom.getForecastDataByIpAddress('134.178.253.144') // BOM IP Address
+const ipData = geoip.lookup('134.178.253.144') // BOM IP Address
+bom.getForecastData(ipData.ll[0], ipData.ll[1])
   .then((data) => {
     console.log(data)
   })

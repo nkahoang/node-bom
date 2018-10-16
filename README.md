@@ -1,7 +1,7 @@
 # node-bom
-[![npm version](https://badge.fury.io/js/node-bom.svg)](https://badge.fury.io/js/node-bom)
-
 NodeJS/Typescript library to access Australian Bureau of Meteorology data.
+
+[![npm version](https://badge.fury.io/js/node-bom.svg)](https://badge.fury.io/js/node-bom)
 
 
 ```js
@@ -20,8 +20,19 @@ bom.getForecastDataByPostcode(3141) // South Yarra, VIC
   .then((data) => {
     console.log(data)
   })
+```
 
+```js
+import * as geoip from 'geoip-lite'
 // Getting forecast data based on IP address
+// this depends on an external package: `geoip-lite`
+
+const ipData = geoip.lookup('134.178.253.144') // BOM IP Address
+bom.getForecastData(ipData.ll[0], ipData.ll[1])
+  .then((data) => {
+    console.log(data)
+  })
+
 bom.getForecastDataByIpAddress('134.178.253.144') // BOM IP Address
   .then((data) => {
     console.log(data)
