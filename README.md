@@ -3,6 +3,28 @@ NodeJS/Typescript library to access Australian Bureau of Meteorology data.
 
 [![npm version](https://badge.fury.io/js/node-bom.svg)](https://badge.fury.io/js/node-bom)
 
+## Examples
+
+Get current weather data
+
+```js
+import { Bom } from 'node-bom'
+
+const bom = new Bom()
+
+bom.getNearestStation(-33.833, 150.52808) //Sydney
+  .then((nearestStation) => {
+    console.log(nearestStation) // nearest station data
+    console.log(nearestStation.period.level.elements) // nearest station elements
+  })
+
+bom.getNearestStationByPostcode(3000) // Melbourne 
+  .then((nearestStation) => {
+    console.log(nearestStation) // nearest station data
+  })
+```
+
+Get weather forecast data
 
 ```js
 import { Bom } from 'node-bom'
