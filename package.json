@@ -1,6 +1,6 @@
 {
   "name": "node-bom",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "NodeJS/Typescript library to access Australian Bureau of Meteorology data.",
   "main": "bom.js",
   "scripts": {
