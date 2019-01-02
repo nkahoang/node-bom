@@ -138,13 +138,17 @@ export class Bom {
 
   _formatStationData(s) {
     const elements = {}
-    s.period[0].level[0].element.map((e) => {
-      const units = e.$.units ? e.$.units : undefined
-      elements[e.$.type] = units ? {
-          value: e._,
-          units
-        } : e._
-    })
+    
+    if (s.period[0].level[0].element &&
+      s.period[0].level[0].element instanceof Array) {
+      s.period[0].level[0].element.map((e) => {
+        const units = e.$.units ? e.$.units : undefined
+        elements[e.$.type] = units ? {
+            value: e._,
+            units
+          } : e._
+      })
+    }
 
     const obj = {
       latitude: s.$.lat,
@@ -195,7 +199,6 @@ export class Bom {
     const state = closest.state_code.toUpperCase();
 
     const { observations } = await this.getParsedStateData(state);
-
     const stations = observations.product.observations[0].station.map(s => this._formatStationData(s));
 
     const nearestStationResult = findNearest({ latitude, longitude }, stations);
@@ -206,6 +209,7 @@ export class Bom {
 
   async getNearestStationByPostcode(postcode: number) {
     const pcData = ausPostcodes.find(p => p.postcode === postcode)
+    
     if (!pcData) {
       return null
     }
