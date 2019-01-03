@@ -5,7 +5,10 @@
       "noImplicitAny": false,
       "module": "commonjs",
       "target": "es2015",
-      "declaration": true
+      "declaration": true,
+      "types": [
+        "node"
+      ],
   },
   "include": [
       "src/**/*"

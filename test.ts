@@ -1,4 +1,4 @@
-import { Bom } from './bom'
+import { Bom } from './dist/bom'
 import * as fsStore from 'cache-manager-fs-hash'
 import * as geoip from 'geoip-lite'
 

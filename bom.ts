@@ -1,7 +1,11 @@
-import { findNearest } from 'geolib';
+import {
+  findNearest
+} from 'geolib';
 import * as cacheManager from 'cache-manager';
 import * as FtpClient from 'ftp';
-import { parseString } from 'xml2js';
+import {
+  parseString
+} from 'xml2js';
 
 import * as ausPostcodes from './au_postcodes';
 
@@ -50,17 +54,17 @@ export const WeatherFeeds: {
 };
 
 export class BomConfig {
-  bomHostname?: string;
-  cacheStore?: string | any;
-  ttl?: number;
-  cacheOptions?: any;
+  bomHostname ? : string;
+  cacheStore ? : string | any;
+  ttl ? : number;
+  cacheOptions ? : any;
 }
 
 export class Bom {
   private config: BomConfig;
   private dataCache;
 
-  constructor(config?: BomConfig) {
+  constructor(config ? : BomConfig) {
     this.config = {
       bomHostname: BOM_FTP_HOST,
       cacheStore: 'memory',
@@ -76,7 +80,7 @@ export class Bom {
   }
 
   async downloadParsedStateData(state: string) {
-    return new Promise<any>((resolve, reject) => {
+    return new Promise < any > ((resolve, reject) => {
       const c = new FtpClient();
 
       const downloadAndParseFtpUrl = url =>
@@ -138,15 +142,15 @@ export class Bom {
 
   _formatStationData(s) {
     const elements = {}
-    
+
     if (s.period[0].level[0].element &&
       s.period[0].level[0].element instanceof Array) {
       s.period[0].level[0].element.map((e) => {
         const units = e.$.units ? e.$.units : undefined
         elements[e.$.type] = units ? {
-            value: e._,
-            units
-          } : e._
+          value: e._,
+          units
+        } : e._
       })
     }
 
@@ -179,11 +183,10 @@ export class Bom {
     xmlStructure.element.map((e) => {
       const units = e.$.units ? e.$.units : undefined
       obj[e.$.type] = units ? {
-          value: e._,
-          units
-        } : e._
-      }
-    )
+        value: e._,
+        units
+      } : e._
+    })
 
     xmlStructure.text.map((e) => {
       obj[e.$.type] = e._
@@ -193,15 +196,23 @@ export class Bom {
   }
 
   async getNearestStation(latitude: number, longitude: number) {
-    const nearest = findNearest({ latitude, longitude }, ausPostcodes);
-    
+    const nearest = findNearest({
+      latitude,
+      longitude
+    }, ausPostcodes);
+
     const closest = ausPostcodes[(nearest as any).key];
     const state = closest.state_code.toUpperCase();
 
-    const { observations } = await this.getParsedStateData(state);
+    const {
+      observations
+    } = await this.getParsedStateData(state);
     const stations = observations.product.observations[0].station.map(s => this._formatStationData(s));
 
-    const nearestStationResult = findNearest({ latitude, longitude }, stations);
+    const nearestStationResult = findNearest({
+      latitude,
+      longitude
+    }, stations);
     const nearestStation = stations[(nearestStationResult as any).key];
     nearestStation.state = state
     return nearestStation
@@ -209,7 +220,7 @@ export class Bom {
 
   async getNearestStationByPostcode(postcode: number) {
     const pcData = ausPostcodes.find(p => p.postcode === postcode)
-    
+
     if (!pcData) {
       return null
     }
@@ -219,15 +230,17 @@ export class Bom {
 
   async getForecastData(latitude: number, longitude: number) {
     const nearestStation = await this.getNearestStation(latitude, longitude)
-    
+
     const statePostcodes = ausPostcodes.filter(p => p.state_code === nearestStation.state)
 
-    const { forecast } = await this.getParsedStateData(nearestStation.state);
+    const {
+      forecast
+    } = await this.getParsedStateData(nearestStation.state);
 
     const matchedAreas = forecast.product.forecast[0].area.filter(
       a => a.$['parent-aac'] === nearestStation.forecastDistrictId
     );
-    
+
     const mappedAreasLocation = matchedAreas
       .map(area => {
         const postcodeLocation = statePostcodes.find(
@@ -247,11 +260,13 @@ export class Bom {
       })
       .filter(a => a);
 
-    const nearestAreaResult = findNearest(
-      { latitude, longitude },
+    const nearestAreaResult = findNearest({
+        latitude,
+        longitude
+      },
       mappedAreasLocation
     );
-    
+
     const nearestArea = mappedAreasLocation[(nearestAreaResult as any).key];
 
     return nearestArea;
