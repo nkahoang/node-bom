@@ -4,8 +4,10 @@ import * as geoip from 'geoip-lite'
 
 const bom = new Bom({
   cacheStore: fsStore,
-  cacheOptions: {
-    path: '/tmp'
+  cacheOptions: { // additional cache options go here, this will be passed to cache-manager
+    options: {
+      path: './tmp'
+    }
   }
 })
 

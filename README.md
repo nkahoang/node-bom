@@ -18,7 +18,7 @@ bom.getNearestStation(-33.833, 150.52808) //Sydney
     console.log(nearestStation.period.level.elements) // nearest station elements
   })
 
-bom.getNearestStationByPostcode(3000) // Melbourne 
+bom.getNearestStationByPostcode(3000) // Melbourne
   .then((nearestStation) => {
     console.log(nearestStation) // nearest station data
   })
@@ -71,7 +71,10 @@ import * as fsStore from 'cache-manager-fs-hash'
 const bom = new Bom({
   cacheStore: fsStore,
   cacheOptions: {
-    path: '/tmp'
+    // additional cache options go here, this will be passed to cache-manager
+    options: {
+      path: './tmp'
+    }
   }
 })
 ```

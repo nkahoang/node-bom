@@ -77,7 +77,7 @@ export class Bom {
     this.dataCache = cacheManager.caching({
       store: this.config.cacheStore,
       ttl: this.config.ttl,
-      options: this.config.cacheOptions
+      ...this.config.cacheOptions
     });
   }
 
