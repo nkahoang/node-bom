@@ -1,11 +1,13 @@
 {
   "name": "node-bom",
-  "version": "0.2.0",
+  "version": "0.2.2",
+  "keywords": ["bom", "australia weather", "australian bureau of meteorology", "bom weather"],
   "description": "NodeJS/Typescript library to access Australian Bureau of Meteorology data.",
   "main": "dist/bom.js",
   "types": "dist/bom.d.ts",
   "scripts": {
     "dist": "webpack",
+    "update-nearest-station": "ts-node updateNearestStationList.ts",
     "test": "ts-node test.ts"
   },
   "homepage": "https://github.com/nkahoang/node-bom",

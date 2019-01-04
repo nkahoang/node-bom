@@ -226,32 +226,49 @@ export class Bom {
       throw new Error(`Invalid station id ${id}`)
     }
 
-    const {
-      observations
-    } = await this.getParsedStateData(state);
+    const stations = await this.getStateStations(state)
 
-    const station = observations.product.observations[0].station.find(s => s.$['forecast-district-id'] === id.toUpperCase())
-
-    if (station) {
-      return this._formatStationData(station)
-    }
-
-    return null
+    return stations.find(s => s.forecastDistrictId === id.toUpperCase())
   }
 
-  async getNearestStation(latitude: number, longitude: number) {
-    const nearest = findNearest({
-      latitude,
-      longitude
-    }, ausPostcodes);
+  async getStateStations(state) {
+    const cacheKey = `${state}:station`
+    try {
+      const stations = await this.dataCache.get(cacheKey)
+      if (stations) {
+        return stations
+      }
+    } catch (_) {}
 
-    const closest = ausPostcodes[(nearest as any).key];
-    const state = closest.state_code.toUpperCase();
-
-    const {
-      observations
-    } = await this.getParsedStateData(state);
+    const { observations } = await this.getParsedStateData(state);
     const stations = observations.product.observations[0].station.map(s => this._formatStationData(s));
+
+    await this.dataCache.set(cacheKey, stations);
+    return stations
+  }
+
+  async getNearestStation(latitude: number, longitude: number, stateFilter?: string) {
+    let state = stateFilter
+
+    if (!state) {
+      const nearest = findNearest({
+        latitude,
+        longitude
+      }, ausPostcodes);
+
+      const closest = ausPostcodes[(nearest as any).key];
+
+      if (closest.nearestStationId) {
+        const stationData = await this.getStationById(closest.nearestStationId)
+        if (stationData) {
+          return stationData
+        }
+      }
+
+      state = closest.state_code.toUpperCase();
+    }
+
+    const stations = await this.getStateStations(state)
 
     const nearestStationResult = findNearest({
       latitude,
@@ -264,11 +281,15 @@ export class Bom {
   async getNearestStationByPostcode(postcode: number) {
     const pcData = ausPostcodes.find(p => p.postcode === postcode)
 
+    if (pcData.nearestStationId) {
+      return this.getStationById(pcData.nearestStationId)
+    }
+
     if (!pcData) {
       return null
     }
 
-    return this.getNearestStation(pcData.latitude, pcData.longitude)
+    return this.getNearestStation(pcData.latitude, pcData.longitude, pcData.state_code)
   }
 
   protected _getStatePostcodes(state: string) {
@@ -280,16 +301,24 @@ export class Bom {
     return this.statePostcodeCache[state]
   }
 
-  async getForecastData(latitude: number, longitude: number) {
-    const nearestStation = await this.getNearestStation(latitude, longitude)
-    const statePostcodes = this._getStatePostcodes(nearestStation.state)
+  protected async _getForecastDataByStation(station: any) {
+    const cacheKey = `${station.forecastDistrictId}:forecast`
+
+    try {
+      const forecastDataByStation = await this.dataCache.get(cacheKey)
+      if (forecastDataByStation) {
+        return forecastDataByStation
+      }
+    }
+    catch(e) {}
+    const statePostcodes = this._getStatePostcodes(station.state)
 
     const {
       forecast
-    } = await this.getParsedStateData(nearestStation.state);
+    } = await this.getParsedStateData(station.state);
 
     const matchedAreas = forecast.product.forecast[0].area.filter(
-      a => a.$['parent-aac'] === nearestStation.forecastDistrictId
+      a => a.$['parent-aac'] === station.forecastDistrictId
     );
 
     const mappedAreasLocation = matchedAreas
@@ -313,24 +342,34 @@ export class Bom {
       .filter(a => a);
 
     const nearestAreaResult = findNearest({
-        latitude,
-        longitude
+        latitude: station.latitude,
+        longitude: station.longitude
       },
       mappedAreasLocation
     );
 
     const nearestArea = mappedAreasLocation[(nearestAreaResult as any).key];
 
+    if (nearestArea) {
+      await this.dataCache.set(cacheKey, nearestArea)
+    }
+
     return nearestArea;
   }
 
-  async getForecastDataByPostcode(postcode: number) {
-    const pcData = ausPostcodes.find(p => p.postcode === postcode)
-    if (!pcData) {
-      return null
-    }
+  async getForecastDataByStationId(stationId: string) {
+    const station = await this.getStationById(stationId)
+    return this._getForecastDataByStation(station)
+  }
 
-    return this.getForecastData(pcData.latitude, pcData.longitude)
+  async getForecastData(latitude: number, longitude: number) {
+    const station = await this.getNearestStation(latitude, longitude)
+    return this._getForecastDataByStation(station)
+  }
+
+  async getForecastDataByPostcode(postcode: number) {
+    const station = await this.getNearestStationByPostcode(postcode)
+    return this._getForecastDataByStation(station)
   }
 }
 
