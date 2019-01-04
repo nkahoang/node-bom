@@ -6,7 +6,7 @@ const bom = new Bom({
   cacheStore: fsStore,
   cacheOptions: { // additional cache options go here, this will be passed to cache-manager
     options: {
-      path: './tmp'
+      path: '/tmp'
     }
   }
 })
@@ -33,6 +33,11 @@ bom.getForecastData(-33.833, 150.52808) // Sydney
 bom.getForecastDataByPostcode(3141) // South Yarra, VIC
   .then((forecastData) => {
     formatWrite(forecastData)
+  })
+
+bom.getStationById('NSW_PW006')
+  .then((stationData) => {
+    formatWrite(stationData)
   })
 
 const ipData = geoip.lookup('134.178.253.144') // BOM IP Address

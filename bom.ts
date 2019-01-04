@@ -65,6 +65,7 @@ export class BomConfig {
 export class Bom {
   private config: BomConfig;
   private dataCache;
+  private statePostcodeCache = {};
 
   constructor(config ? : BomConfig) {
     this.config = {
@@ -146,6 +147,13 @@ export class Bom {
     return parsedData;
   }
 
+  protected _isSameState(s1: string, s2: string): boolean {
+    const fs1 = s1.trim().toUpperCase()
+    const fs2 = s2.trim().toUpperCase()
+
+    return (fs1 == fs2) || (['NSWACT','ACTNSW'].indexOf(fs1+fs2) >= 0)
+  }
+
   protected _formatStationData(s) {
     const elements = {}
 
@@ -162,10 +170,12 @@ export class Bom {
       })
     }
 
+    const id = s.$['forecast-district-id']
+
     const obj = {
       latitude: parseFloat(s.$.lat),
       longitude: parseFloat(s.$.lon),
-      forecastDistrictId: s.$['forecast-district-id'],
+      forecastDistrictId: id,
       tz: s.$.tz,
       name: s.$['stn-name'],
       height: parseFloat(s.$['stn-height']),
@@ -177,7 +187,8 @@ export class Bom {
           ...s.period[0].level[0].$,
           elements
         }
-      }
+      },
+      state: id ? id.split('_')[0] : null
     }
 
     return obj
@@ -208,6 +219,26 @@ export class Bom {
     return obj
   }
 
+  async getStationById(id: string) {
+    const state = id ? id.toUpperCase().split('_')[0] : null
+
+    if (!state) {
+      throw new Error(`Invalid station id ${id}`)
+    }
+
+    const {
+      observations
+    } = await this.getParsedStateData(state);
+
+    const station = observations.product.observations[0].station.find(s => s.$['forecast-district-id'] === id.toUpperCase())
+
+    if (station) {
+      return this._formatStationData(station)
+    }
+
+    return null
+  }
+
   async getNearestStation(latitude: number, longitude: number) {
     const nearest = findNearest({
       latitude,
@@ -227,7 +258,6 @@ export class Bom {
       longitude
     }, stations);
     const nearestStation = stations[(nearestStationResult as any).key];
-    nearestStation.state = state
     return nearestStation
   }
 
@@ -241,10 +271,18 @@ export class Bom {
     return this.getNearestStation(pcData.latitude, pcData.longitude)
   }
 
+  protected _getStatePostcodes(state: string) {
+    if (!this.statePostcodeCache[state]) {
+      this.statePostcodeCache[state] =
+        ausPostcodes.filter(p => this._isSameState(p.state_code, state))
+    }
+
+    return this.statePostcodeCache[state]
+  }
+
   async getForecastData(latitude: number, longitude: number) {
     const nearestStation = await this.getNearestStation(latitude, longitude)
-
-    const statePostcodes = ausPostcodes.filter(p => p.state_code === nearestStation.state)
+    const statePostcodes = this._getStatePostcodes(nearestStation.state)
 
     const {
       forecast
@@ -259,6 +297,7 @@ export class Bom {
         const postcodeLocation = statePostcodes.find(
           p => p.place_name.toUpperCase() === area.$.description.toUpperCase()
         );
+
         if (!postcodeLocation) return null;
 
         return {

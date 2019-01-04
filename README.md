@@ -5,13 +5,19 @@ NodeJS/Typescript library to access Australian Bureau of Meteorology data.
 
 ## Examples
 
-Get current weather data
+Importing
 
 ```js
 import { Bom } from 'node-bom'
 
-const bom = new Bom()
+const bom = new Bom({
+  /// options
+})
+```
 
+Get current weather data
+
+```js
 bom.getNearestStation(-33.833, 150.52808) //Sydney
   .then((nearestStation) => {
     console.log(nearestStation) // nearest station data
@@ -27,10 +33,6 @@ bom.getNearestStationByPostcode(3000) // Melbourne
 Get weather forecast data
 
 ```js
-import { Bom } from 'node-bom'
-
-const bom = new Bom()
-
 // Getting forecast data based on latitude / longitude
 bom.getForecastData(-33.833, 150.52808) // Sydney
   .then((data) => {
@@ -41,6 +43,15 @@ bom.getForecastData(-33.833, 150.52808) // Sydney
 bom.getForecastDataByPostcode(3141) // South Yarra, VIC
   .then((data) => {
     console.log(data)
+  })
+```
+
+Get current observation of a station by its ID:
+
+```js
+bom.getStationById('NSW_PW006')
+  .then((stationData) => {
+    console.log(stationData)
   })
 ```
 
@@ -62,8 +73,11 @@ bom.getForecastDataByIpAddress('134.178.253.144') // BOM IP Address
 
 ```
 
-The library uses memory caching by default using node cache-manager. To change to a custom cache backend:
+The library uses memory caching by default using node cache-manager.
 
+To change to a custom cache backend:
+
+File cache:
 ```js
 import { Bom } from 'node-bom'
 import * as fsStore from 'cache-manager-fs-hash'
@@ -75,6 +89,22 @@ const bom = new Bom({
     options: {
       path: './tmp'
     }
+  }
+})
+```
+
+Redis cache:
+```js
+import { Bom } from 'node-bom'
+import * as redisStore from 'cache-manager-ioredis'
+
+const bom = new Bom({
+  cacheStore: redisStore,
+  cacheOptions: {
+    host: 'localhost',
+    port: 6379,
+    db: 0,
+    ttl: 600
   }
 })
 ```
