@@ -8,6 +8,7 @@ import {
 } from 'xml2js';
 
 import * as ausPostcodes from './au_postcodes';
+import { Icons } from './bom-icons';
 
 export interface IWeatherFeed {
   forecast: string;
@@ -15,7 +16,8 @@ export interface IWeatherFeed {
 }
 
 export const BOM_FTP_HOST = 'ftp.bom.gov.au';
-
+export const AuPostcodes = ausPostcodes;
+export const BomIcons = Icons;
 export const WeatherFeeds: {
   [state: string]: IWeatherFeed;
 } = {
@@ -79,6 +81,10 @@ export class Bom {
     });
   }
 
+  getIconMeaning(icon: number | string) {
+    return BomIcons[icon.toString()]
+  }
+
   async downloadParsedStateData(state: string) {
     return new Promise < any > ((resolve, reject) => {
       const c = new FtpClient();
@@ -140,27 +146,29 @@ export class Bom {
     return parsedData;
   }
 
-  _formatStationData(s) {
+  protected _formatStationData(s) {
     const elements = {}
 
     if (s.period[0].level[0].element &&
       s.period[0].level[0].element instanceof Array) {
       s.period[0].level[0].element.map((e) => {
         const units = e.$.units ? e.$.units : undefined
+        const parsedValue = parseFloat(e._)
+        const value = isNaN(parsedValue) ? e._ : parsedValue
         elements[e.$.type] = units ? {
-          value: e._,
+          value,
           units
-        } : e._
+        } : value
       })
     }
 
     const obj = {
-      latitude: s.$.lat,
-      longitude: s.$.lon,
+      latitude: parseFloat(s.$.lat),
+      longitude: parseFloat(s.$.lon),
       forecastDistrictId: s.$['forecast-district-id'],
       tz: s.$.tz,
       name: s.$['stn-name'],
-      height: s.$['stn-height'],
+      height: parseFloat(s.$['stn-height']),
       description: s.$.description,
       type: s.$.type,
       period: {
@@ -175,17 +183,22 @@ export class Bom {
     return obj
   }
 
-  _formatForecast(xmlStructure) {
+  protected _formatForecast(xmlStructure) {
     const obj = {
       ...xmlStructure.$
     }
 
     xmlStructure.element.map((e) => {
       const units = e.$.units ? e.$.units : undefined
+      const parsedValue = parseFloat(e._)
+      const value = isNaN(parsedValue) ? e._ : parsedValue
       obj[e.$.type] = units ? {
-        value: e._,
+        value,
         units
-      } : e._
+      } : value
+      if (e.$.type === 'forecast_icon_code') {
+        obj['icon'] = this.getIconMeaning(value)
+      }
     })
 
     xmlStructure.text.map((e) => {
