@@ -15,10 +15,27 @@ const bom = new Bom({
 })
 ```
 
+Getting BOM's parsed state weather data:
+
+```js
+bom.getParsedStateData('VIC', {
+  bypassCache: false // default: false to use cache
+})
+  .then((stateData) => {
+    console.log(stateData)
+    /*
+      {
+        forecast: {}, // forecast data
+        observations: {} // current station's observations data
+      }
+    */
+  })
+```
+
 Get current weather data. There are 3 methods to query current data and forecast data:
 - Using a longitude latitude (slowest, as it needs to find the nearest station)
 - Using an Australian postcode (e.g. `3141`, `2000`)
-- Using a station ID (e.g. `'NSW_PW006'`)
+- Using a station ID (e.g. `'250042'` - use `stateFilter` param to speed up)
 
 Current data (or Station's observation)
 
@@ -33,9 +50,14 @@ bom.getNearestStationByPostcode(3000) // Melbourne
     console.log(nearestStation) // nearest station data
   })
 
-bom.getStationById('NSW_PW006')
+bom.getStationByBomId('250042', 'NSW')
+  /* **Note**: the second parameter is optional, however due to the way
+  BOM structures their dataset, the station data is tied to a state.
+  Without specifying a state, the library will attempt to download all state data
+  and this might cause excessive long time. Therefore it's recommended to use this
+  api with the state filter param */
   .then((station) => {
-    console.log(station) // nearest station data
+    console.log(station)
   })
 ```
 
@@ -55,7 +77,12 @@ bom.getForecastDataByPostcode(3141) // South Yarra, VIC
   })
 
 // Getting forecast data based on postcode
-bom.getForecastDataByStationId('NSW_PW006')
+bom.getForecastDataByStationId('NSW_PW006', 'NSW')
+  /* **Note**: the second parameter is optional, however due to the way
+  BOM structures their dataset, the station data is tied to a state.
+  Without specifying a state, the library will attempt to download all state data
+  and this might cause excessive long time. Therefore it's recommended to use this
+  api with the state filter param */
   .then((data) => {
     console.log(data)
   })

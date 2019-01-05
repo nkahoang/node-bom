@@ -11,7 +11,6 @@ const bom = new Bom({
   }
 })
 
-
 const runTest = async (writeOutput: boolean) => {
   const formatWrite = (obj) => {
     writeOutput && console.log(JSON.stringify(obj, null, 2))
@@ -31,6 +30,13 @@ const runTest = async (writeOutput: boolean) => {
       formatWrite(nearestStation) // nearest station data
     })
 
+  console.time('getStationByBomId')
+  await bom.getStationByBomId('250042', 'NSW')
+    .then((stationData) => {
+      console.timeEnd('getStationByBomId')
+      formatWrite(stationData)
+    })
+
   console.time('getForecastData')
   await bom.getForecastData(-33.833, 150.52808) // Sydney
     .then((forecastData) => {
@@ -45,11 +51,11 @@ const runTest = async (writeOutput: boolean) => {
       formatWrite(forecastData)
     })
 
-  console.time('getStationById')
-  await bom.getStationById('NSW_PW006')
-    .then((stationData) => {
-      console.timeEnd('getStationById')
-      formatWrite(stationData)
+  console.time('getForecastDataByStationBomId')
+  await bom.getForecastDataByStationBomId('250042', 'NSW')
+    .then((forecastData) => {
+      console.timeEnd('getForecastDataByStationBomId')
+      formatWrite(forecastData)
     })
 
   const ipData = geoip.lookup('134.178.253.144') // BOM IP Address

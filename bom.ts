@@ -6,13 +6,17 @@ import * as FtpClient from 'ftp';
 import {
   parseString
 } from 'xml2js';
-
+import * as Bluebird from 'bluebird'
 import * as ausPostcodes from './au_postcodes';
 import { Icons } from './bom-icons';
 
 export interface IWeatherFeed {
   forecast: string;
   observations: string;
+}
+
+export interface IGetParsedStateDataOptions{
+  bypassCache?: boolean
 }
 
 export const BOM_FTP_HOST = 'ftp.bom.gov.au';
@@ -86,7 +90,7 @@ export class Bom {
     return BomIcons[icon.toString()]
   }
 
-  async downloadParsedStateData(state: string) {
+  protected async _downloadParsedStateData(state: string) {
     return new Promise < any > ((resolve, reject) => {
       const c = new FtpClient();
 
@@ -136,13 +140,15 @@ export class Bom {
     });
   }
 
-  async getParsedStateData(state: string) {
-    try {
-      const data = await this.dataCache.get(state);
-      if (data) return data;
-    } catch {}
+  async getParsedStateData(state: string, options?: IGetParsedStateDataOptions) {
+    if (!(options && options.bypassCache)) {
+      try {
+        const data = await this.dataCache.get(state);
+        if (data) return data;
+      } catch {}
+    }
 
-    const parsedData = await this.downloadParsedStateData(state);
+    const parsedData = await this._downloadParsedStateData(state);
     await this.dataCache.set(state, parsedData);
     return parsedData;
   }
@@ -170,12 +176,14 @@ export class Bom {
       })
     }
 
-    const id = s.$['forecast-district-id']
+    const forecastId = s.$['forecast-district-id']
 
     const obj = {
       latitude: parseFloat(s.$.lat),
       longitude: parseFloat(s.$.lon),
-      forecastDistrictId: id,
+      bomId: s.$['bom-id'],
+      wmoId: s.$['wmo-id'],
+      forecastDistrictId: forecastId,
       tz: s.$.tz,
       name: s.$['stn-name'],
       height: parseFloat(s.$['stn-height']),
@@ -188,7 +196,7 @@ export class Bom {
           elements
         }
       },
-      state: id ? id.split('_')[0] : null
+      state: forecastId ? forecastId.split('_')[0] : null
     }
 
     return obj
@@ -219,16 +227,18 @@ export class Bom {
     return obj
   }
 
-  async getStationById(id: string) {
-    const state = id ? id.toUpperCase().split('_')[0] : null
+  async getStationByBomId(id: number | string, stateFilter?: string) {
+    const statesToLook = stateFilter && stateFilter.trim().length > 0 ?
+      [stateFilter] : Object.keys(WeatherFeeds)
 
-    if (!state) {
-      throw new Error(`Invalid station id ${id}`)
-    }
+    const allStateStations = await
+      Bluebird
+        .mapSeries(statesToLook, (state) => this.getStateStations(state))
 
-    const stations = await this.getStateStations(state)
-
-    return stations.find(s => s.forecastDistrictId === id.toUpperCase())
+    const idStr = `${id}`
+    return allStateStations
+      .reduce((p, n) => p.concat(n), [])
+      .find(s => s.bomId === idStr)
   }
 
   async getStateStations(state) {
@@ -259,7 +269,11 @@ export class Bom {
       const closest = ausPostcodes[(nearest as any).key];
 
       if (closest.nearestStationId) {
-        const stationData = await this.getStationById(closest.nearestStationId)
+        const stationData = await this.getStationByBomId(
+          closest.nearestStationId,
+          closest.state_code.toUpperCase()
+        )
+
         if (stationData) {
           return stationData
         }
@@ -281,12 +295,15 @@ export class Bom {
   async getNearestStationByPostcode(postcode: number) {
     const pcData = ausPostcodes.find(p => p.postcode === postcode)
 
-    if (pcData.nearestStationId) {
-      return this.getStationById(pcData.nearestStationId)
-    }
-
     if (!pcData) {
       return null
+    }
+
+    if (pcData.nearestStationId) {
+      const nearestStation = this.getStationByBomId(pcData.nearestStationId, pcData.state_code)
+      if (nearestStation) {
+        return nearestStation
+      }
     }
 
     return this.getNearestStation(pcData.latitude, pcData.longitude, pcData.state_code)
@@ -317,11 +334,26 @@ export class Bom {
       forecast
     } = await this.getParsedStateData(station.state);
 
-    const matchedAreas = forecast.product.forecast[0].area.filter(
+    let matchedAreas = forecast.product.forecast[0].area.filter(
       a => a.$['parent-aac'] === station.forecastDistrictId
-    );
+    )
+
+    let l = 0
+    while (l < matchedAreas.length) {
+      const currentArea = matchedAreas[l]
+      if (!currentArea['forecast-period']) {
+        // this is not the area we want as it's just the parent area
+        // which doesn't have any forecast details.
+        // dig deeper
+        matchedAreas = matchedAreas.concat(forecast.product.forecast[0].area.filter(
+          a => a.$['parent-aac'] === currentArea.$.aac
+        ))
+      }
+      l++
+    }
 
     const mappedAreasLocation = matchedAreas
+      .filter(area => area['forecast-period'])
       .map(area => {
         const postcodeLocation = statePostcodes.find(
           p => p.place_name.toUpperCase() === area.$.description.toUpperCase()
@@ -357,9 +389,9 @@ export class Bom {
     return nearestArea;
   }
 
-  async getForecastDataByStationId(stationId: string) {
-    const station = await this.getStationById(stationId)
-    return this._getForecastDataByStation(station)
+  async getForecastDataByStationBomId(bomId: number | string, stateFilter?: string) {
+    const station = await this.getStationByBomId(bomId, stateFilter)
+    return station
   }
 
   async getForecastData(latitude: number, longitude: number) {

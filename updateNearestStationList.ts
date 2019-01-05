@@ -15,8 +15,8 @@ const generateNearestStation = async () => {
       console.time('getNearestStation')
       const station = await bom.getNearestStation(auPostcode.latitude, auPostcode.longitude, auPostcode.state_code)
       console.timeEnd('getNearestStation')
-      if (station && station.forecastDistrictId) {
-        postcodeCache[auPostcode.postcode] = station.forecastDistrictId
+      if (station && station.bomId) {
+        postcodeCache[auPostcode.postcode] = station.bomId
       }
     }
 

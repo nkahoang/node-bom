@@ -1,7 +1,12 @@
 {
   "name": "node-bom",
-  "version": "0.2.2",
-  "keywords": ["bom", "australia weather", "australian bureau of meteorology", "bom weather"],
+  "version": "0.2.3",
+  "keywords": [
+    "bom",
+    "australia weather",
+    "australian bureau of meteorology",
+    "bom weather"
+  ],
   "description": "NodeJS/Typescript library to access Australian Bureau of Meteorology data.",
   "main": "dist/bom.js",
   "types": "dist/bom.d.ts",
@@ -25,6 +30,7 @@
     "webpack-cli": "^3.2.0"
   },
   "dependencies": {
+    "bluebird": "^3.5.3",
     "cache-manager": "^2.9.0",
     "ftp": "^0.3.10",
     "geolib": "^2.0.24",
