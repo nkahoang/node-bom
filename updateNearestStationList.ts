@@ -1,10 +1,9 @@
 import { Bom, AuPostcodes } from './bom'
-import * as fsStore from 'cache-manager-fs-hash'
 import * as Bluebird from 'bluebird'
 import * as fs from 'fs'
 
 const bom = new Bom({
-  cacheStore: 'memory'
+  cacheStore: 'memory' // use memory store as the update process is best executed without any caching
 })
 
 const generateNearestStation = async () => {
@@ -21,6 +20,9 @@ const generateNearestStation = async () => {
     }
 
     auPostcode.nearestStationId = postcodeCache[auPostcode.postcode]
+    if (auPostcode.state_name) {
+      delete auPostcode.state_name
+    }
     return auPostcode
   })
 
