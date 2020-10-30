@@ -391,7 +391,7 @@ export class Bom {
 
   async getForecastDataByStationBomId(bomId: number | string, stateFilter?: string) {
     const station = await this.getStationByBomId(bomId, stateFilter)
-    return station
+    return this._getForecastDataByStation(station)
   }
 
   async getForecastData(latitude: number, longitude: number) {
